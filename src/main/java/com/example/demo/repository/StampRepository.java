@@ -30,27 +30,8 @@ public class StampRepository {
     }
 
     public Stamp save(Stamp stamp) {
-        // 检查用户是否存在
-        String checkUserSql = "SELECT COUNT(*) FROM Users WHERE userId = ?";
-        int userCount = jdbcTemplate.queryForObject(checkUserSql, new Object[]{stamp.getUserId()}, Integer.class);
-
-        if (userCount == 0) {
-            // 用户不存在，新建用户
-            String createUserSql = "INSERT INTO Users (userId, userName) VALUES (?, ?)";
-            jdbcTemplate.update(createUserSql, stamp.getUserId(), "DefaultUserName"); // 使用默认用户名或从其他地方获取
-            // TBD，如果用户不存在那用户名需不需要获取
-        }
-
-        if(stamp.getHandwritten()!=null) {
-            String sql = "INSERT INTO Stamps (stampId, userId, style, color, wrapText, horizonText, handwritten, stampImage, isDefault) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            jdbcTemplate.update(sql, stamp.getStampId(), stamp.getUserId(), stamp.getStyle(), stamp.getColor(), stamp.getWrapText(), stamp.getHorizonText(), stamp.getHandwritten(), stamp.getStampImage(), stamp.isDefault());
-        }
-        else{
-            String sql = "INSERT INTO Stamps (stampId, userId, style, color, wrapText, horizonText, handwritten, stampImage, isDefault) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            jdbcTemplate.update(sql, stamp.getStampId(), stamp.getUserId(), stamp.getStyle(), stamp.getColor(), stamp.getWrapText(), stamp.getHorizonText(), stamp.getHandwritten(), stamp.getStampImage(), stamp.isDefault());
-        }
-        // 新建印章
-
+        String sql = "INSERT INTO Stamps (stampId, userId, style, color, wrapText, horizonText, handwritten, stampImage, isDefault) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, stamp.getStampId(), stamp.getUserId(), stamp.getStyle(), stamp.getColor(), stamp.getWrapText(), stamp.getHorizonText(), stamp.getHandwritten(), stamp.getStampImage(), stamp.isDefault());
         return stamp;
     }
 
@@ -70,6 +51,12 @@ public class StampRepository {
 
         String setDefaultSql = "UPDATE Stamps SET isDefault = TRUE WHERE userId = ? AND stampId = ?";
         jdbcTemplate.update(setDefaultSql, userId, stampId);
+    }
+
+    public Stamp findDefaultStampByUserId(String userId) {
+        String sql = "SELECT * FROM stamps WHERE userId = ? AND isDefault = TRUE";
+        List<Stamp> stamps = jdbcTemplate.query(sql, new Object[]{userId}, new StampRowMapper());
+        return stamps.isEmpty() ? null : stamps.get(0);
     }
 
     // 内部类，用于映射ResultSet到Stamp对象

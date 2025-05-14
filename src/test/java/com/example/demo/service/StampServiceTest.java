@@ -1,10 +1,9 @@
 package com.example.demo.service;
 
-import com.example.demo.model.SealConfiguration;
-import com.example.demo.model.SealUtil;
 import com.example.demo.model.Stamp;
 //import com.example.demo.model.StampDTO;
 import com.example.demo.repository.StampRepository;
+import com.itextpdf.text.Image;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,14 +14,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import static com.example.demo.service.StampService.subImages;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,6 +48,28 @@ public class StampServiceTest {
     }
 
     @Test
+    public void testtamp() throws Exception {
+        stamp = new Stamp();
+        stamp.setStampId("2");
+        stamp.setUserId("user123");
+        stamp.setStyle("OFFICIAL");
+        stamp.setColor("RED");
+        stamp.setWrapText("Wrap Text");
+        stamp.setHorizonText("Horizon Text");
+        stamp.setHandwritten(null);
+        String base64Image = stampService.createStampImage(stamp.getStyle(), stamp.getColor(), stamp.getWrapText(), stamp.getHorizonText());
+        stamp.setStampImage(base64Image);
+        stamp.setDefault(true);
+        Image[] subImage = subImages(stamp, 2);
+//        for (Image image : subImage) {
+//
+//            File outputfile = new File("path/to/save/image.jpg");
+////            ImageIO.write(image, "jpg", outputfile);
+//        }
+    }
+
+
+    @Test
     public void testCreateStamp_ShouldReturnSavedStamp() {
         when(stampRepository.save(any(Stamp.class))).thenReturn(stamp);
 
@@ -65,8 +82,18 @@ public class StampServiceTest {
 
     @Test
     public void testQueryStampsByUserId_ShouldReturnListOfStampDTO() {
-        List<Stamp> stamps = Collections.singletonList(stamp);
-        when(stampRepository.findAllByUserId(anyString())).thenReturn(stamps);
+        boolean isCross = true;
+        int pages = 9;
+        int nums;
+        if(isCross) {
+            nums = (pages+1)/2;
+        }
+        else {
+            nums = pages;
+        }
+        nums = nums+1;
+//        List<Stamp> stamps = Collections.singletonList(stamp);
+//        when(stampRepository.findAllByUserId(anyString())).thenReturn(stamps);
     }
 
     @Test

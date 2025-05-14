@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,9 +37,7 @@ public class StampService {
         // Generate a unique stampId
         String stampId = UUID.randomUUID().toString();
         stamp.setStampId(stampId);
-
         // Save the stamp to the database
-
         return stampRepository.save(stamp);
     }
     public List<Stamp> findAllStamps() {
@@ -47,6 +46,9 @@ public class StampService {
 
     public List<Stamp> queryStampsByUserId(String userId) {
         return stampRepository.findAllByUserId(userId);
+    }
+    public boolean isUserIdExists(String userId) {
+        return !stampRepository.findAllByUserId(userId).isEmpty();
     }
 
     public Stamp findStampById(String stampId) {
@@ -62,6 +64,24 @@ public class StampService {
     }
 
     public void setDefaultStamp(String userId, String stampId) {
+        // 检查用户ID和印章ID是否为空
+        if (userId == null || userId.isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be blank");
+        }
+        if (stampId == null || stampId.isEmpty()) {
+            throw new IllegalArgumentException("Stamp ID cannot be blank");
+        }
+
+        // 检查印章ID是否存在
+        Optional<Stamp> stamp = Optional.ofNullable(stampRepository.findById(stampId));
+        if (!stamp.isPresent()) {
+            throw new IllegalArgumentException("Stamp ID does not exist: " + stampId);
+        }
+
+        // 检查印章是否属于指定用户
+        if (!stamp.get().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Stamp ID does not belong to the user: " + userId);
+        }
         stampRepository.setDefaultStamp(userId, stampId);
     }
 
@@ -70,7 +90,8 @@ public class StampService {
         byte[] imageBytes = Base64.getDecoder().decode(stamp.getStampImage());
         ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
         BufferedImage img = ImageIO.read(bis);
-
+        File outputfile = new File("D:\\code\\demo\\test_image_sum.jpg");
+        ImageIO.write(img, "jpg", outputfile);
         int h = img.getHeight();
         int w = img.getWidth();
 
@@ -87,7 +108,10 @@ public class StampService {
             }
 
             ImageIO.write(subImg, "png", out);
-            nImage[i] = Image.getInstance(out.toByteArray());
+            outputfile = new File("D:\\code\\demo\\test_image" + i + ".jpg");
+            ImageIO.write(img, "jpg", outputfile);
+            Image image = Image.getInstance(out.toByteArray());// Toolkit.getDefaultToolkit().createImage(subImg.getSource());
+            nImage[i] = image;
             out.flush();
             out.reset();
         }

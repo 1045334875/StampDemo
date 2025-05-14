@@ -1,5 +1,7 @@
 package com.example.demo.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class Stamp {
@@ -97,5 +99,13 @@ public class Stamp {
 
     public void setDefault(boolean isDefault) {
         this.isDefault = isDefault;
+    }
+    // Convert Stamp to Map
+    public Map<String, Object> toMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("stampId", stampId);
+        map.put("stampImage", stampImage);
+        map.put("isDefault", isDefault);
+        return map;
     }
 }

@@ -25,6 +25,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -77,7 +78,17 @@ public class PdfServiceTest {
 
     @Test
     public void testStampAndSavePdf() throws Exception {
+        List<Integer> pages = new ArrayList<>(Arrays.asList(1, 2, 3, 4));
+        int cross=1;
+        int i=0;
+        for (Integer page : pages) {
+            int pageNumber = page;
+            if(i%2 ==1){
+                page++;
+            }
+            i++;
 
+        }
     }
     @Test
     public void testtemp() throws Exception {
