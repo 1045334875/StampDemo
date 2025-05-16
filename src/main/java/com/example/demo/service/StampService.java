@@ -163,33 +163,71 @@ public class StampService {
                     mainFont.setFontFamily("楷体");
                     mainFont.setMarginSize(10);
                     mainFont.setFontText(horizonText);
-                    mainFont.setFontSize(25);
-                    mainFont.setFontSpace(20.0);
+                    mainFont.setFontSize(35);
+                    mainFont.setFontSpace(35.0);
                     configuration.setMainFont(mainFont);
                 }
                 configuration.setBorderCircle(new SealCircle(3, 140, 140));
                 configuration.setBorderInnerCircle(new SealCircle(1, 135, 135));
-                configuration.setInnerCircle(new SealCircle(2, 100, 100));
+//                configuration.setInnerCircle(new SealCircle(2, 100, 100));
                 image = SealUtil.buildAndStoreSeal(configuration);
 
                 break;
             case "SPECIAL":
                 // 专用章样式配置
-                SealFont font = new SealFont();
-                font.setFontSize(120).setBold(true).setFontText(wrapText);
-                image = SealUtil.buildAndStorePersonSeal(300, 16, font, "印");
+                if (wrapText != null) {
+                    SealFont titleFont = new SealFont();
+                    titleFont.setBold(true);
+                    titleFont.setFontFamily("宋体");
+                    titleFont.setFontSize(22);
+                    titleFont.setFontText(wrapText);
+                    titleFont.setMarginSize(68);
+                    titleFont.setFontSpace(10.0);
+                    configuration.setCenterFont(titleFont);
+                }
+                if (horizonText != null) {
+                    // 设置主文字
+                    SealFont mainFont = new SealFont();
+                    mainFont.setBold(true);
+                    mainFont.setFontFamily("楷体");
+                    mainFont.setMarginSize(10);
+                    mainFont.setFontText(horizonText);
+                    mainFont.setFontSize(35);
+                    mainFont.setFontSpace(35.0);
+                    configuration.setMainFont(mainFont);
+                }
+                configuration.setBorderCircle(new SealCircle(3, 140, 140));
+                configuration.setBorderInnerCircle(new SealCircle(1, 135, 135));
+                image = SealUtil.buildAndStoreSeal(configuration);
 
                 break;
             case "OVAL":
                 // 椭圆章样式配置
                 if (wrapText != null) {
                     // 设置副文字
-                    SealFont viceFont = new SealFont();
+                    // 设置副文字
+//                    SealFont centerFont = new SealFont();
+//                    centerFont.setBold(true);
+//                    centerFont.setFontFamily("宋体");
+//                    centerFont.setMarginSize(0);
+//                    centerFont.setFontText(wrapText);
+//                    centerFont.setFontSize(22);
+//                    centerFont.setFontSpace(22.0);
+//                    configuration.setCenterFont(centerFont);
+                    SealFont titleFont = new SealFont();
+                    titleFont.setBold(true);
+                    titleFont.setFontFamily("楷体");
+                    titleFont.setFontSize(22);
+                    titleFont.setFontText(wrapText);
+                    titleFont.setMarginSize(55);
+                    titleFont.setFontSpace(10.0);
+                    configuration.setCenterFont(titleFont);
+                    SealFont  viceFont = new SealFont();
                     viceFont.setBold(true);
                     viceFont.setFontFamily("宋体");
                     viceFont.setMarginSize(10);
-                    viceFont.setFontText(wrapText);
-                    viceFont.setFontSize(22);
+                    viceFont.setFontText("这是底下的文字但是似乎没给接口");
+                    viceFont.setFontSize(13);
                     viceFont.setFontSpace(12.0);
                     configuration.setViceFont(viceFont);
                 }
@@ -206,13 +244,17 @@ public class StampService {
                 }
                 configuration.setBorderCircle(new SealCircle(3, 140, 100));
                 configuration.setBorderInnerCircle(new SealCircle(1, 135, 95));
-                configuration.setInnerCircle(new SealCircle(2, 85, 45));
+//                configuration.setInnerCircle(new SealCircle(2, 85, 45));
                 // 返回签章信息
                 image = SealUtil.buildAndStoreSeal(configuration);
 
                 break;
             case "SQUARE":
                 // 方形章样式配置
+                SealFont font = new SealFont();
+                font.setFontSize(120).setBold(true).setFontText(wrapText);
+                image = SealUtil.buildAndStorePersonSeal(300, 16, font, "印");
+
                 break;
             default:
                 throw new IllegalArgumentException("Invalid style");

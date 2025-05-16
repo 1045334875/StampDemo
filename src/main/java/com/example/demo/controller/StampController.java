@@ -8,6 +8,7 @@ import com.example.demo.service.PdfService;
 //import com.example.demo.model.StampDTO;
 import com.example.demo.service.StampService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.text.pdf.PdfReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -17,13 +18,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RestController
 @RequestMapping("/api/stamp")
@@ -47,8 +49,8 @@ public class StampController {
                 try {
                     // 将Base64编码的字符串转换为字节数组
                     byte[] imageBytes = Base64.getDecoder().decode(image);
-                    // 从字节数组创建BufferedImage对象
-                    BufferedImage tempimage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+//                    // 从字节数组创建BufferedImage对象
+//                    BufferedImage tempimage = ImageIO.read(new ByteArrayInputStream(imageBytes));
                 } catch (Exception e) {
                     e.printStackTrace();
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to decode image: " + e.getMessage());
@@ -119,9 +121,7 @@ public class StampController {
             @RequestPart(value = "crossPages", required = false) String crossPagesStr,
             @RequestPart(value = "pages", required = false) String pagesStr,
             @RequestPart(value = "x", required = false) String xStr,
-            @RequestPart(value = "y", required = false) String yStr) throws Exception {if (document == null || document.isEmpty()) {
-        return ResponseEntity.badRequest().body(null);
-    }
+            @RequestPart(value = "y", required = false) String yStr) {
 
         // 检查文件是否为空
         if (document == null || document.isEmpty()) {
@@ -130,7 +130,6 @@ public class StampController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
         // 检查印章ID是否为空
-
         if (stampId == null || stampId.isEmpty()) {
             Stamp defaultStamp = stampRepository.findDefaultStampByUserId(userId);
             if (defaultStamp == null) {
@@ -147,6 +146,14 @@ public class StampController {
                         400, "Bad Request", Collections.singletonList("Stamp ID does not exist: " + stampId));
                 return ResponseEntity.badRequest().body(errorResponse);
             }
+            else if (userId != null && !userId.isEmpty()){
+                // 检查印章是否属于指定用户
+                if (!stamp.getUserId().equals(userId)) {
+                    ErrorResponse errorResponse = new ErrorResponse(
+                            400, "Bad Request", Collections.singletonList("Stamp ID does not belong to the user: " + userId));
+                    return ResponseEntity.badRequest().body(errorResponse);
+                }
+            }
         }
         // 解析 crossPages 和 pages 为 List<Integer>
         List<Integer> crossPages = parseIntegerList(crossPagesStr);
@@ -155,10 +162,45 @@ public class StampController {
         // 解析 x 和 y 为 float
         float x = parseFloat(xStr, 0.0f);
         float y = parseFloat(yStr, 0.0f);
+        // 检查 pages 和 crossPages 是否在有效范围内
         try {
+            PdfReader reader = new PdfReader(document.getInputStream());
+            int totalPages = reader.getNumberOfPages();
+
+            // 将不可变集合转换为可变集合
+            List<Integer> mutablePages = null;
+            // 检查 pages
+            if (pages != null) {
+                mutablePages = new ArrayList<>(pages);
+                Collections.sort(mutablePages);
+                if (mutablePages.get(0) < 1 || mutablePages.get(pages.size() - 1) > totalPages) {
+                    ErrorResponse errorResponse = new ErrorResponse(
+                            400, "Bad Request", Collections.singletonList("Page number is out of bounds. Valid range is 1 to " + totalPages));
+                    return ResponseEntity.badRequest().body(errorResponse);
+                }
+
+            }
+
+            // 检查 crossPages
+            // 将不可变集合转换为可变集合
+            List<Integer> mutableCrossPages = null;
+            if (crossPages != null) {
+                mutableCrossPages = new ArrayList<>(crossPages);
+                Collections.sort(mutableCrossPages);
+                if (mutableCrossPages.get(0) < 1 || mutableCrossPages.get(crossPages.size() - 1) > totalPages) {
+                    ErrorResponse errorResponse = new ErrorResponse(
+                            400, "Bad Request", Collections.singletonList("Page number is out of bounds. Valid range is 1 to " + totalPages));
+                    return ResponseEntity.badRequest().body(errorResponse);
+                }
+            }
             // 判断是否为骑缝章
             if (seamType == null) {
-                byte[] signedPdf = pdfService.stampAndSavePdf(document, userId, stampId, pages, x, y);
+                if(mutablePages==null){
+                    mutablePages = IntStream.rangeClosed(1, totalPages)
+                                    .boxed()
+                                    .collect(Collectors.toList());
+                }
+                byte[] signedPdf = pdfService.stampAndSavePdf(document, userId, stampId, mutablePages, x, y);
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=signed_document.pdf")
@@ -166,12 +208,17 @@ public class StampController {
             } else {
                 boolean isSeam = "cross-page".equals(seamType);
                 // 骑缝章需要 crossPages 参数
-                if (crossPages == null || crossPages.isEmpty()) {
-                    if (pages != null && !pages.isEmpty()) {
-                        crossPages = pages;
+                if (mutableCrossPages == null || mutableCrossPages.isEmpty()) {
+                    if (mutablePages != null && !mutablePages.isEmpty()) {
+                        mutableCrossPages = mutablePages;
+                    }
+                    else{
+                        mutableCrossPages = IntStream.rangeClosed(1, totalPages)
+                                            .boxed()
+                                            .collect(Collectors.toList());
                     }
                 }
-                byte[] signedPdf = pdfService.qfz(document, stampId, crossPages, isSeam, y);
+                byte[] signedPdf = pdfService.qfz(document, stampId, mutableCrossPages, isSeam, y);
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=signed_document.pdf")

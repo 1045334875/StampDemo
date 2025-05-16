@@ -13,6 +13,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 //import com.itextpdf.text.pdf.PdfDocument;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfReader;
 
@@ -52,7 +53,9 @@ public class PdfService {
         // 解码Base64字符串并创建Image
         byte[] imageBytes = Base64.getDecoder().decode(stamp.getStampImage());
         Image image = Image.getInstance(imageBytes);
-
+        // 获取印章的宽度和高度
+        float stampWidth = image.getScaledWidth();
+        float stampHeight = image.getScaledHeight();
         // 读取PDF文件
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PdfReader reader = new PdfReader(file.getInputStream());
@@ -62,7 +65,18 @@ public class PdfService {
         try {
             PdfStamper pdfStamper = new PdfStamper(reader, writer);
             for (Integer page : pages) {
+
                 int pageNumber = page;
+                // 获取页面的大小
+                Rectangle pageSize = pdfStamper.getReader().getPageSize(pageNumber);
+
+                // 检查 x 和 y 是否在允许的范围内
+                if (x < 0 || x > (pageSize.getWidth() - stampWidth)) {
+                    throw new IllegalArgumentException("x is out of bounds: " + x + ". It should be between 0 and " + (pageSize.getWidth() - stampWidth));
+                }
+                if (y < 0 || y > (pageSize.getHeight() - stampHeight)) {
+                    throw new IllegalArgumentException("y is out of bounds: " + y + ". It should be between 0 and " + (pageSize.getHeight() - stampHeight));
+                }
                 // 获取操作的页面
                 PdfContentByte pdfContentByte = pdfStamper.getOverContent(pageNumber);
                 // 根据域的大小缩放图片
@@ -100,6 +114,9 @@ public class PdfService {
         // 解码Base64字符串并创建Image
         byte[] imageBytes = Base64.getDecoder().decode(stamp.getStampImage());
         Image image = Image.getInstance(imageBytes);
+        // 获取印章的宽度和高度
+        float stampWidth = image.getScaledWidth();
+        float stampHeight = image.getScaledHeight();
 
         // 读取PDF文件
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -152,6 +169,9 @@ public class PdfService {
                 }
                 i++;
                 float x = width - crossImage.getWidth();
+                if (y < 0 || y > (pageSize.getHeight() - stampHeight)) {
+                    throw new IllegalArgumentException("y is out of bounds: " + y + ". It should be between 0 and " + (pageSize.getHeight() - stampHeight));
+                }
                 crossImage.setAbsolutePosition(x, y);
                 pdfContentByte.addImage(crossImage);
 

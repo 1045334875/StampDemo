@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import com.example.demo.model.Stamp;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -16,17 +17,33 @@ public class StampRepository {
     private JdbcTemplate jdbcTemplate;
 
     public List<Stamp> findAll() {
-        return jdbcTemplate.query("SELECT * FROM Stamps", new StampRowMapper());
+        try {
+            return jdbcTemplate.query("SELECT * FROM Stamps", new StampRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            // 没有找到匹配的 stampId
+            return null; // 或者可以抛出自定义异常
+        }
+
     }
 
     public List<Stamp> findAllByUserId(String userId) {
         String sql = "SELECT * FROM Stamps WHERE userId = ?";
-        return jdbcTemplate.query(sql, new Object[]{userId}, new StampRowMapper());
+        try {
+            return jdbcTemplate.query(sql, new Object[]{userId}, new StampRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            // 没有找到匹配的 stampId
+            return null; // 或者可以抛出自定义异常
+        }
     }
 
     public Stamp findById(String stampId) {
         String sql = "SELECT * FROM Stamps WHERE stampId = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{stampId}, new StampRowMapper());
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{stampId}, new StampRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            // 没有找到匹配的 stampId
+            return null; // 或者可以抛出自定义异常
+        }
     }
 
     public Stamp save(Stamp stamp) {
@@ -55,7 +72,14 @@ public class StampRepository {
 
     public Stamp findDefaultStampByUserId(String userId) {
         String sql = "SELECT * FROM stamps WHERE userId = ? AND isDefault = TRUE";
-        List<Stamp> stamps = jdbcTemplate.query(sql, new Object[]{userId}, new StampRowMapper());
+        List<Stamp> stamps;
+        try {
+            stamps = jdbcTemplate.query(sql, new Object[]{userId}, new StampRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            // 没有找到匹配的 stampId
+            stamps = null; // 或者可以抛出自定义异常
+        }
+
         return stamps.isEmpty() ? null : stamps.get(0);
     }
 

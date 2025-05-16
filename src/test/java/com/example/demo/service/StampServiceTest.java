@@ -100,7 +100,7 @@ public class StampServiceTest {
     public void testCreateStampImage_ShouldReturnBase64EncodedImage() throws Exception {
         String style = "OFFICIAL";
         String color = "RED";
-        String wrapText = "正版认证";
+        String wrapText = null;
         String horizonText = "某某某公司事业专用章";
         String base64Image = stampService.createStampImage(style, color, wrapText, horizonText);
         assertNotNull(base64Image);
@@ -108,9 +108,23 @@ public class StampServiceTest {
 
         style = "SPECIAL";
         color = "BLUE";
+        wrapText = "某某分公司";
         base64Image = stampService.createStampImage(style, color, wrapText, horizonText);
         assertNotNull(base64Image);
         saveBase64Image(base64Image, "D:\\code\\demo\\special.png");
+
+        style = "OVAL";
+        color = "RED";
+        base64Image = stampService.createStampImage(style, color, wrapText, horizonText);
+        assertNotNull(base64Image);
+        saveBase64Image(base64Image, "D:\\code\\demo\\oval.png");
+
+        style = "SQUARE";
+        color = "RED";
+        wrapText = "特别好";
+        base64Image = stampService.createStampImage(style, color, wrapText, horizonText);
+        assertNotNull(base64Image);
+        saveBase64Image(base64Image, "D:\\code\\demo\\square.png");
 
 //        verify(SealUtil.class).buildAndStoreSeal(any(SealConfiguration.class));
     }
